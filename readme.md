@@ -1,10 +1,28 @@
 ## Инструкция для запуска
 1. Создаем bash файл командой `nano FILENAME.sh` и копируем в него содержимое файла **start.sh** 
 2. Запускаем FILENAME.sh командой `bash FILENAME.sh`
-3. Запускаем докер контейнер командой `cd /app/wireguard && docker compose up -d`
+
+*3. При необходимости вносим изменения в конфигурацию docker-compose файла `cd /app/wireguard && nano docker-compose.yml`*
+
+4. Запускаем Docker контейнер командой `cd /app/wireguard && docker compose up -d`
 
 Готово, конфиги наших клиентов хранятся в директории **/app/wireguard/config/**, можем скопировать файл конфигурации клиента **peerНОМЕР.conf** с сервера с помощью WinSCP или другим удобным для вас способом или вывести QR код прямо в терминале командой `docker exec -it wireguard /app/show-peer НОМЕР_ИЛИ ИМЯ`
 
+## Полезные команды
+Показать QR код клиента в терминале:
+```
+docker exec -it wireguard /app/show-peer НОМЕР_ИЛИ ИМЯ
+```
+
+Просмотр логов контейнера для отладки проблем:
+```
+docker logs -f wireguard
+```
+
+Подключиться в сам контейнер:
+```
+docker exec -it wireguard /bin/bash
+```
 
 ## Описание работы bash 
 1. Для начала установим Docker с помощью официального скрипта:
@@ -12,12 +30,12 @@
 sudo apt install curl
 sudo curl https://get.docker.com -o install.sh && sh install.sh
 ```
->Добавляем автозапуск Docker
+*Добавляем автозапуск Docker*
 ```
 systemctl enable docker.service
 systemctl enable docker
 ```
-> Добавляем текущего пользователя в группу Docker (выборочно):
+*Добавляем текущего пользователя в группу Docker (выборочно):*
 
 (или добавляем не root пользователя в группу docker командой `usermod -aG docker USERNAME`)
 ```
@@ -57,19 +75,36 @@ cp ./docker-compose.yml /app/wireguard
 
 **./config:/config** — место для хранения конфигов нашего контейнера
 
-## Полезные команды
-
-Показать QR код клиента в терминале:
+## Как обновить Wireguard в Docker
+1. Переходим в нашу директорию с Wireguard:
 ```
-docker exec -it wireguard /app/show-peer НОМЕР_ИЛИ ИМЯ
-```
-
-Просмотр логов контейнера для отладки проблем:
-```
-docker logs -f wireguard
+cd /app/wireguard
 ```
 
-Подключиться в сам контейнер:
+2. Скачиваем новый образ, пересобираем контейнер и чистим от старых образов:
 ```
-docker exec -it wireguard /bin/bash
+docker compose pull wireguard
+docker compose up -d wireguard
+docker image prune
+```
+
+## Как удалить Wireguard
+1. Остановим наш контейнер с Wireguard:
+```
+docker stop wireguard
+```
+
+2. Удалим контейнер:
+```
+docker rm wireguard
+```
+
+3. Удалим образ Wireguard:
+```
+docker rmi ghcr.io/linuxserver/wireguard
+```
+
+4. Удалим директорию с конфигурационными файлами Wireguard:
+```
+rm -rf /app/wireguard
 ```
